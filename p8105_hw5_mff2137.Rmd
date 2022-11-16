@@ -42,21 +42,63 @@ The `homicide` dataset has data on criminal homicides over a decade in 50 of the
 
 ### Clean and tidy data
 
-In this step, we summarize across cities to obtain the total number of homicides and the an the number of unsolved homicides (with disposition. The total number of homicides in Baltimore, MD is 2827.
+In this step, we summarize across cities to obtain the total number of homicides and the an the number of unsolved homicides. The total number of homicides in Baltimore, MD is 2827.
+
 
 ```{r}
-hom_total <-
+balt_total <-
   homicide %>% 
+  filter(city_state == "Baltimore, MD") %>% 
   group_by(city_state) %>% 
-  count()
+  summarize(total = n()) 
 ```
 
-To obtain the number of unsolved homicides, we summarize by `city-state` and `disposition`, then combine the number of homicides of which disposition is “Closed without arrest” or “Open/No arrest”). The number of unsolved homicides in Baltiomre, MD is 1825
+To obtain the number of unsolved homicides, we summarize by `city-state` and `disposition`, then combine the number of homicides of which disposition is “Closed without arrest” or “Open/No arrest”. The number of unsolved homicides in Baltiomre, MD is 1825
 
 ```{r}
-hom_disp <-
+balt_open <-
   homicide %>% 
-  group_by(city_state, disposition) %>% 
-  count()
+  filter(city_state == "Baltimore, MD", disposition %in% c("Closed without arrest", "Open/No arrest")) %>%
+  group_by(city_state) %>% 
+  summarize(unresolved = n()) 
 ```
+
+This step produces a data frame with counts of both unresolved and total homicides in Baltimore 
+
+```{r}
+balt_df <-
+  inner_join(balt_open, balt_total)
+```
+
+## Baltimore `prop.test`
+
+To estimate the proportion of unresolved homicides in Baltimore, MD, we use the `prop.test` . The resulting proportion is 0.646 and the 95% confidence interval is 0.628, 0.663
+
+```{r}
+balt_test <-
+  prop.test(1825, 2827) %>% 
+  broom::tidy() %>% 
+  select(estimate, starts_with("conf"))
+
+balt_test
+```
+
+Another way, same result...
+
+```{r}
+prop_balt <-
+  prop.test(
+    x = balt_df %>% pull(unresolved),
+    n = balt_df %>% pull(total),
+    alternative = c("t"),
+    conf.level = 0.95, correct = TRUE) %>% 
+  broom::tidy() %>% 
+  select(estimate, starts_with("conf"))
+
+prop_balt
+```
+
+
+
+
 

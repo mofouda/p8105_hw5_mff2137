@@ -68,37 +68,26 @@ This step produces a data frame with counts of both unresolved and total homicid
 ```{r}
 balt_df <-
   inner_join(balt_open, balt_total)
+
+balt_df
 ```
 
-## Baltimore `prop.test`
-
-To estimate the proportion of unresolved homicides in Baltimore, MD, we use the `prop.test` . The resulting proportion is 0.646 and the 95% confidence interval is 0.628, 0.663
+The same approach could be used to tidy the `homicide` dataframe to prepare it for running the `prop.test` on all 50 cities included in the dataset.
 
 ```{r}
-balt_test <-
-  prop.test(1825, 2827) %>% 
-  broom::tidy() %>% 
-  select(estimate, starts_with("conf"))
+homicide_open <-
+  homicide %>% 
+  filter( disposition %in% c("Closed without arrest", "Open/No arrest")) %>%
+  group_by(city_state) %>% 
+  summarize(unresolved = n())
 
-balt_test
+homicide_total <-
+  homicide %>% 
+  group_by(city_state) %>% 
+  summarize(total = n())
+
+homicide_df <-
+  inner_join(homicide_open, homicide_total)
 ```
-
-Another way, same result...
-
-```{r}
-prop_balt <-
-  prop.test(
-    x = balt_df %>% pull(unresolved),
-    n = balt_df %>% pull(total),
-    alternative = c("t"),
-    conf.level = 0.95, correct = TRUE) %>% 
-  broom::tidy() %>% 
-  select(estimate, starts_with("conf"))
-
-prop_balt
-```
-
-
-
 
 

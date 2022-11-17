@@ -42,7 +42,7 @@ The `homicide` dataset has data on criminal homicides over a decade in 50 of the
 
 ### Data wrangling
 
-In this step, we summarize across cities to obtain the total number of homicides and the an the number of unsolved homicides. The total number of homicides in Baltimore, MD is 2827.
+In this step, we summarize across cities to obtain the total number of homicides and the number of unsolved homicides. The total number of homicides in Baltimore, MD is 2827.
 
 
 ```{r}
@@ -67,7 +67,7 @@ balt_open <-
 balt_open
 ```
 
-This step produces a data frame with counts of both unresolved and total homicides in Baltimore 
+This step produces a data frame with counts of both unresolved and total homicides in Baltimore, MD. 
 
 ```{r}
 balt_df <-
@@ -99,7 +99,7 @@ homicide_df
 
 ### Baltimore `prop.test` function
 
-In this step, we create a function to compute the `prop.test` function in order to estimate the proportion of homicides that are unresolved in Baltiomore, MD. Using `purr::map` function. The estimate is 0.646 and the 95% confidence interval is 0.628, 0.663. These results are saved to a tidy dataframe `balt_prop`. 
+In this step, we create a function to compute the `prop.test` function in order to estimate the proportion of homicides that are unresolved in Baltiomore, MD. Using `purr::map`. The estimate is 0.646 and the 95% confidence interval is 0.628, 0.663. These results are saved to a tidy dataframe `balt_prop`. 
 
 
 ```{r}
@@ -136,7 +136,7 @@ homicide_prop_df
 
 ### The Test Estimaes Plot
 
-This creates a plot that shows the estimates and CIs for each city using `geom_histogram` and `geom_errorbar` for a way to add error bars based on the upper and lower limits.
+This creates a plot that shows the estimates and CIs for each city using `geom_col` and `geom_errorbar` for a way to add error bars based on the upper and lower limits.
 
 
 ```{r}
@@ -161,7 +161,7 @@ estimates_cl_plot
 
 ### The Simulation Function
 
-This step conducts a simulation to explore power in a one-sample t-test. The code generates 5000 datasets by iteration for the model, using a fixed sample size `n = 3` and sigma `sd = 5`. For each dataset, the estimate `mu hat` and `p-value` arising from the `t.test` are saved in a dataset cleaned and tidied using `broom::tidy`. 
+This step conducts a simulation to explore power in a one-sample t-test. The code generates 5000 datasets by iteration for the model, using a fixed sample size `n = 30` and sigma `sd = 5`. For each dataset, the estimate `mu hat` and `p-value` arising from the `t.test` are saved in a dataset cleaned and tidied using `broom::tidy`. 
 
 
 ```{r}

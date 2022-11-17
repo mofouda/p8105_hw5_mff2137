@@ -142,17 +142,26 @@ This creates a plot that shows the estimates and CIs for each city using `geom_h
 ```{r}
 estimates_cl_plot <-
   homicide_prop_df%>%
-  mutate (estimate = factor(estimate)) %>%
-  ggplot(aes(x=city_state, y=estimate)) + 
-    geom_bar(position=position_dodge(), stat="identity") +
-    geom_errorbar(aes(ymin=estimate-conf.low, ymax=estimate+conf.high),
-                  width=.2,                    
-                  position=position_dodge(.9))
+  janitor::clean_names() %>% 
+  mutate(city_state = fct_reorder(city_state, estimate)) %>%
+  ggplot(aes(x = city_state, y = estimate)) + 
+    geom_col(fill = NA, color = "black")  +
+    geom_errorbar(aes(ymin = estimate - conf_low, ymax = estimate + conf_high), 
+                  width = 0.2) +
+  labs(
+        title = "Homicides Esimates Across US Cities",
+        x = "City",
+        y = "prop.test Estimates") + 
+   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+estimates_cl_plot
 ```
 
 ## Problem 3
 
- This step conducts a simulation to explore power in a one-sample t-test. The code generates 5000 datasets by iteration for the model, using a fixed sample size `n = 3` and sigma `sd = 5`. For each dataset, the estimate `mu hat` and `p-value` arising from the `t.test` are saved in a dataset cleaned and tidied using `broom::tidy`. 
+### The Simulation Function
+
+This step conducts a simulation to explore power in a one-sample t-test. The code generates 5000 datasets by iteration for the model, using a fixed sample size `n = 3` and sigma `sd = 5`. For each dataset, the estimate `mu hat` and `p-value` arising from the `t.test` are saved in a dataset cleaned and tidied using `broom::tidy`. 
 
 
 ```{r}
@@ -177,6 +186,8 @@ sim_results_df =
 sim_results_df
 ```
 
+### Power and Effect Plots
+
 This code chunk creates a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis. The plots shows that as the effect (mean) size increase, the power increases. 
 
 ```{r}
@@ -200,12 +211,20 @@ prop_df_plot<-
   mutate(power = reject/total) %>% 
   ggplot(aes(x = true_mean, y = power )) +
   geom_point() +
-  geom_smooth(se =FALSE)
+  geom_smooth(se =FALSE)+
+  labs(
+        title = "Power plot",
+        x = "Mean",
+        y = "Power") +
+  scale_x_continuous(
+        breaks = seq(0, 6, by = 1)) 
+  
 prop_df_plot
 ```
 
 
 The following code creates two plots, the first showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis. The second shows the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis. The sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ since both plots show a positive linear relationship with  the true value of μ.
+
 
 ```{r}
 mean_est_plot <-
@@ -217,7 +236,13 @@ mean_est_plot <-
     average_est = mean(estimate)) %>% 
   ggplot(aes(x = true_mean, y = average_est)) +
   geom_point() +
-  geom_smooth(se =FALSE)
+  geom_smooth(se =FALSE) +
+  labs(
+        title = "True Mean and Estimate plot",
+        x = "True Mean",
+        y = "Mean Estimate") +
+  scale_x_continuous(
+        breaks = seq(0, 6, by = 1))
 
 mean_est_plot
 
@@ -231,7 +256,13 @@ mean_rej_plot <-
     average_est = mean(estimate)) %>% 
   ggplot(aes(x = true_mean, y = average_est)) +
   geom_point()+
-  geom_smooth(se =FALSE)
+  geom_smooth(se =FALSE) +
+  labs(
+        title = "Rejected Null plot",
+        x = "True Mean",
+        y = "Mean Estimate") +
+  scale_x_continuous(
+        breaks = seq(0, 6, by = 1))
 
 mean_rej_plot
 ```

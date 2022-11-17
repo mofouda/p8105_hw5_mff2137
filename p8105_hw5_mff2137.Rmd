@@ -51,6 +51,8 @@ balt_total <-
   filter(city_state == "Baltimore, MD") %>% 
   group_by(city_state) %>% 
   summarize(total = n()) 
+
+balt_total
 ```
 
 To obtain the number of unsolved homicides, we summarize by `city-state` and `disposition`, then combine the number of homicides of which disposition is “Closed without arrest” or “Open/No arrest”. The number of unsolved homicides in Baltiomre, MD is 1825
@@ -61,6 +63,8 @@ balt_open <-
   filter(city_state == "Baltimore, MD", disposition %in% c("Closed without arrest", "Open/No arrest")) %>%
   group_by(city_state) %>% 
   summarize(unresolved = n()) 
+
+balt_open
 ```
 
 This step produces a data frame with counts of both unresolved and total homicides in Baltimore 
@@ -88,6 +92,8 @@ homicide_total <-
 
 homicide_df <-
   inner_join(homicide_open, homicide_total)
+
+homicide_df
 ```
 
 
@@ -109,6 +115,7 @@ prop_test = function(df) {
 }
 
 balt_prop <- prop_test(balt_df)
+balt_prop
 ```
 
 ### Applying the function across cities 
@@ -127,25 +134,13 @@ homicide_prop_df <-
 homicide_prop_df
 ```
 
-### Plot
+### The Test Estimaes Plot
 
 This creates a plot that shows the estimates and CIs for each city using `geom_histogram` and `geom_errorbar` for a way to add error bars based on the upper and lower limits.
 
-```{r}
-plot <-
-  homicide_prop_df%>%
-  mutate (estimate = factor(estimate)) %>%
-  ggplot(aes(estimate, fill = city_state)) + 
-    geom_histogram(position = "dodge", bandwidth = 2) +
-    geom_errorbar(aes(ymin = estimate-conf.low, ymax = estimate+conf.high),
-                  width=.2,                    
-                  position=position_dodge(.9))
-```
-
-Trying to plot the relationship using `geom_bar`... 
 
 ```{r}
-plot2 <-
+estimates_cl_plot <-
   homicide_prop_df%>%
   mutate (estimate = factor(estimate)) %>%
   ggplot(aes(x=city_state, y=estimate)) + 
@@ -178,7 +173,72 @@ sim_results_df =
     estimate_df = map2(.x = sample_size, .y = true_mean, ~ sim_t(n = .x, mu = .y))
   ) %>% 
   unnest(estimate_df)
+
+sim_results_df
 ```
+
+This code chunk creates a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis. The plots shows that as the effect (mean) size increase, the power increases. 
+
+```{r}
+total_df <-
+  sim_results_df %>% 
+  janitor::clean_names() %>% 
+  select(true_mean, p_value) %>% 
+  group_by(true_mean) %>% 
+  summarize(total = n())
+
+reject_df <-
+  sim_results_df %>% 
+  janitor::clean_names() %>% 
+  select(true_mean, p_value) %>% 
+  filter(p_value < 0.05) %>% 
+  group_by(true_mean) %>% 
+  summarize(reject = n())
+
+prop_df_plot<-
+  inner_join(reject_df, total_df) %>% 
+  mutate(power = reject/total) %>% 
+  ggplot(aes(x = true_mean, y = power )) +
+  geom_point() +
+  geom_smooth(se =FALSE)
+prop_df_plot
+```
+
+
+The following code creates two plots, the first showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis. The second shows the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis. The sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ since both plots show a positive linear relationship with  the true value of μ.
+
+```{r}
+mean_est_plot <-
+  sim_results_df %>% 
+  janitor::clean_names() %>% 
+  select(true_mean, estimate) %>% 
+  group_by(true_mean) %>% 
+  summarize(
+    average_est = mean(estimate)) %>% 
+  ggplot(aes(x = true_mean, y = average_est)) +
+  geom_point() +
+  geom_smooth(se =FALSE)
+
+mean_est_plot
+
+mean_rej_plot <-
+  sim_results_df %>% 
+  janitor::clean_names() %>% 
+  select(true_mean, estimate, p_value) %>% 
+  filter(p_value < 0.05) %>%
+  group_by(true_mean) %>% 
+  summarize(
+    average_est = mean(estimate)) %>% 
+  ggplot(aes(x = true_mean, y = average_est)) +
+  geom_point()+
+  geom_smooth(se =FALSE)
+
+mean_rej_plot
+```
+
+
+
+
 
 
 
